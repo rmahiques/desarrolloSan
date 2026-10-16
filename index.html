@@ -81,34 +81,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const pageOrder = pageOrderEl ? JSON.parse(pageOrderEl.textContent) : [];
     const pageSet = new Set(pageOrder);
     const pageTexts = {};
-
-    // ── Nested-page text protocol (parent-chain relay) ──
-    // Page bundles ship once, in the ROOT document's manifest. Every
-    // document mints the blobs for its OWN frames, obtaining page text
-    // through a strict parent-chain relay: a document only ever SENDS to
-    // its direct parent (which, for every document the publisher's own
-    // runtime minted, is another publisher document) and only ACCEPTS
-    // text from that direct parent; requests from below are honored only
-    // for the document's own child frames, and the ROOT never sends
-    // upward at all. That last rule is load-bearing: the artifact host's
-    // frame-ancestors allows claude.ai (and friends) to frame an
-    // artifact, so window.top can be a FOREIGN document — a top-addressed
-    // protocol would hand page uuids to that ancestor and accept forged
-    // "page text" from it, minting attacker HTML as an artifact-origin
-    // blob document. The chain never touches the ancestor: requests stop
-    // at the root, replies are origin-addressed per hop (never '*' when
-    // an origin exists), and both directions are origin-gated (on https
-    // a foreign sender's origin can never equal this document's; in
-    // opaque contexts — file:// — everything serializes as 'null', where
-    // an embedded EXTERNAL frame still fails the gate by carrying its
-    // own real origin, and a sandboxed child of such a frame is excluded
-    // by the own-child-frames check plus uuid unguessability). Shape is
-    // deny-by-default: one request form, one reply form, no error
-    // replies.
-    // window.origin is the SERIALIZED SECURITY origin ('null' in opaque
-    // contexts such as a sandboxed preview iframe) — location.origin is
-    // computed from the URL and stays 'https://…' even when the document
-    // is sandboxed, which would misgate every opaque chain.
     const OWN_TARGET = /^https?:[/][/]/.test(window.origin || '')
       ? window.origin
       : '*';
